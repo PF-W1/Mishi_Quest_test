@@ -37,7 +37,7 @@
         </div>
       </div>
       <div id="unity-warning"></div>
-      <button id="start-button" style="display: none; padding: 15px 30px; font-size: 18px;">Play Game</button>
+      <button id="start-button" style="display: none; padding: 15px 30px; font-size: 18px; margin:auto;">Play Game</button>
       <button id="fullscreen-button">Fullscreen</button>
     </div>
 
@@ -101,14 +101,17 @@
               await canvas.webkitRequestFullscreen();
             }
 
-            // Hide the play button and show the canvas
+            if (screen.orientation && screen.orientation.lock) {
+              try {
+                await screen.orientation.lock("landscape");
+              } catch (err) {
+                console.warn("Orientation lock not supported or failed:", err.message);
+              }
+            }
+
             startButton.style.display = "none";
             canvas.style.display = "block";
             document.querySelector("#unity-loading-bar").style.display = "block";
-
-            // Add an event listener to detect fullscreen exit
-            document.addEventListener("fullscreenchange", handleFullscreenExit);
-            document.addEventListener("webkitfullscreenchange", handleFullscreenExit);
 
             const script = document.createElement("script");
             script.src = loaderUrl;
@@ -126,15 +129,6 @@
             alert("Error entering fullscreen: " + error.message);
           }
         });
-      }
-
-      function handleFullscreenExit() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          // Exit fullscreen on mobile: revert to initial state
-          canvas.style.display = "none";
-          document.querySelector("#unity-loading-bar").style.display = "none";
-          startButton.style.display = "block";
-        }
       }
 
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -155,7 +149,7 @@
           }).then((unityInstance) => {
             document.querySelector("#unity-loading-bar").style.display = "none";
 
-            // Fullscreen button toggle functionality for desktop
+            // Fullscreen button toggle functionality
             fullscreenButton.addEventListener("click", async () => {
               if (!document.fullscreenElement) {
                 try {
