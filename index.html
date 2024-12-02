@@ -7,12 +7,23 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <style>
-      .unity-mobile canvas {
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
+      #fullscreen-button {
+        display: none; /* Only show on desktop */
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 1000;
+      }
+
+      #fullscreen-button:hover {
+        background-color: rgba(0, 0, 0, 0.9);
       }
     </style>
   </head>
@@ -28,15 +39,16 @@
       <div id="unity-warning"></div>
       <div id="unity-footer">
         <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button" style="display: none;"></div>
         <div id="unity-build-title">Mishi</div>
       </div>
       <button id="start-button" style="display: none; padding: 15px 30px; font-size: 18px;">Play Game</button>
+      <button id="fullscreen-button">Fullscreen</button>
     </div>
 
     <script>
       const canvas = document.querySelector("#unity-canvas");
       const startButton = document.querySelector("#start-button");
+      const fullscreenButton = document.querySelector("#fullscreen-button");
 
       function unityShowBanner(msg, type) {
         const warningBanner = document.querySelector("#unity-warning");
@@ -83,20 +95,16 @@
 
         startButton.addEventListener("click", async () => {
           try {
-            // For iOS, show an alert to prompt rotation
             if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
               alert("Please rotate your device to landscape mode for the best experience.");
             }
 
-            // Request fullscreen
             if (canvas.requestFullscreen) {
               await canvas.requestFullscreen();
             } else if (canvas.webkitRequestFullscreen) {
-              // For Safari on iOS
               await canvas.webkitRequestFullscreen();
             }
 
-            // Lock orientation (works on non-iOS devices)
             if (screen.orientation && screen.orientation.lock) {
               try {
                 await screen.orientation.lock("landscape");
@@ -105,7 +113,6 @@
               }
             }
 
-            // Start Unity game
             startButton.style.display = "none";
             canvas.style.display = "block";
             document.querySelector("#unity-loading-bar").style.display = "block";
@@ -131,11 +138,10 @@
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         setupForMobile();
       } else {
-        // Ensure the canvas and loading bar are visible on desktop
         canvas.style.display = "block";
         document.querySelector("#unity-loading-bar").style.display = "block";
+        fullscreenButton.style.display = "block"; // Show fullscreen button on desktop
 
-        // Set the canvas size for desktop
         canvas.style.width = "100%";
         canvas.style.height = "100%";
 
@@ -146,9 +152,27 @@
             document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
           }).then((unityInstance) => {
             document.querySelector("#unity-loading-bar").style.display = "none";
-            document.querySelector("#unity-fullscreen-button").onclick = () => {
-              unityInstance.SetFullscreen(1);
-            };
+
+            // Fullscreen button toggle functionality
+            fullscreenButton.addEventListener("click", async () => {
+              if (!document.fullscreenElement) {
+                try {
+                  if (canvas.requestFullscreen) {
+                    await canvas.requestFullscreen();
+                  }
+                } catch (err) {
+                  console.warn("Fullscreen request failed:", err.message);
+                }
+              } else {
+                try {
+                  if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                  }
+                } catch (err) {
+                  console.warn("Exiting fullscreen failed:", err.message);
+                }
+              }
+            });
           }).catch((message) => {
             alert(message);
           });
