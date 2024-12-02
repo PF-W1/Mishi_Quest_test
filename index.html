@@ -6,6 +6,15 @@
     <title>Unity Web Player | Mishi</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+      .unity-mobile canvas {
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -37,9 +46,9 @@
         const div = document.createElement('div');
         div.innerHTML = msg;
         warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        if (type === 'error') div.style = 'background: red; padding: 10px;';
         else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
           setTimeout(() => {
             warningBanner.removeChild(div);
             updateBannerVisibility();
@@ -74,16 +83,26 @@
 
         startButton.addEventListener("click", async () => {
           try {
+            // For iOS, show an alert to prompt rotation
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+              alert("Please rotate your device to landscape mode for the best experience.");
+            }
+
             // Request fullscreen
             if (canvas.requestFullscreen) {
               await canvas.requestFullscreen();
             } else if (canvas.webkitRequestFullscreen) {
+              // For Safari on iOS
               await canvas.webkitRequestFullscreen();
             }
 
-            // Lock orientation to landscape
+            // Lock orientation (works on non-iOS devices)
             if (screen.orientation && screen.orientation.lock) {
-              await screen.orientation.lock("landscape");
+              try {
+                await screen.orientation.lock("landscape");
+              } catch (err) {
+                console.warn("Orientation lock not supported or failed:", err.message);
+              }
             }
 
             // Start Unity game
@@ -110,32 +129,32 @@
       }
 
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-  setupForMobile();
-} else {
-  // Ensure the canvas and loading bar are visible on desktop
-  canvas.style.display = "block";
-  document.querySelector("#unity-loading-bar").style.display = "block";
+        setupForMobile();
+      } else {
+        // Ensure the canvas and loading bar are visible on desktop
+        canvas.style.display = "block";
+        document.querySelector("#unity-loading-bar").style.display = "block";
 
-  // Set the canvas size for desktop
-  canvas.style.width = "100%";
-  canvas.style.height = "100%";
+        // Set the canvas size for desktop
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
 
-  const script = document.createElement("script");
-  script.src = loaderUrl;
-  script.onload = () => {
-    createUnityInstance(canvas, config, (progress) => {
-      document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-    }).then((unityInstance) => {
-      document.querySelector("#unity-loading-bar").style.display = "none";
-      document.querySelector("#unity-fullscreen-button").onclick = () => {
-        unityInstance.SetFullscreen(1);
-      };
-    }).catch((message) => {
-      alert(message);
-    });
-  };
-  document.body.appendChild(script);
-}
+        const script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+          createUnityInstance(canvas, config, (progress) => {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            document.querySelector("#unity-fullscreen-button").onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }).catch((message) => {
+            alert(message);
+          });
+        };
+        document.body.appendChild(script);
+      }
     </script>
   </body>
 </html>
