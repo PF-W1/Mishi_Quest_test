@@ -110,23 +110,32 @@
       }
 
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        setupForMobile();
-      } else {
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        const script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-          createUnityInstance(canvas, config, (progress) => {
-            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-          }).then((unityInstance) => {
-            document.querySelector("#unity-loading-bar").style.display = "none";
-          }).catch((message) => {
-            alert(message);
-          });
-        };
-        document.body.appendChild(script);
-      }
+  setupForMobile();
+} else {
+  // Ensure the canvas and loading bar are visible on desktop
+  canvas.style.display = "block";
+  document.querySelector("#unity-loading-bar").style.display = "block";
+
+  // Set the canvas size for desktop
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+
+  const script = document.createElement("script");
+  script.src = loaderUrl;
+  script.onload = () => {
+    createUnityInstance(canvas, config, (progress) => {
+      document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+    }).then((unityInstance) => {
+      document.querySelector("#unity-loading-bar").style.display = "none";
+      document.querySelector("#unity-fullscreen-button").onclick = () => {
+        unityInstance.SetFullscreen(1);
+      };
+    }).catch((message) => {
+      alert(message);
+    });
+  };
+  document.body.appendChild(script);
+}
     </script>
   </body>
 </html>
